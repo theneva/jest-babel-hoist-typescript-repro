@@ -13,9 +13,8 @@ We have the bare minimum of Babel config, which loads `@babel/preset-env` target
 
 There is no Jest configuration, so we're seeing the default behaviour that is
 
-1. Read `.babelrc`
-2. Hoist mocks using `babel-plugin-jest-hoist`
-3. Perform the test run
+1. Read `.babelrc`, and apply specified plugins and `babel-plugin-jest-hoist`
+2. Perform the test run
 
 ## Test subject
 
