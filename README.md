@@ -1,6 +1,6 @@
 # Babel hoist TypeScript issue repro
 
-This is what is (in my opinion) a reasonably configured TypeScript project that uses Jest for tests.
+This is (in my opinion) a reasonably configured TypeScript project that uses Jest.
 
 ## Config
 
@@ -13,12 +13,12 @@ We have the bare minimum of Babel config, which loads `@babel/preset-env` target
 
 There is no Jest configuration, so we're seeing the default behaviour that is
 
-1. Read `.babelrc`, and apply specified plugins and `babel-plugin-jest-hoist`
+1. Read `.babelrc`, and apply specified presets/plugins and `babel-plugin-jest-hoist`
 2. Perform the test run
 
 ## Test subject
 
-The test subject is a module that exports an Express middleware which performs some work that is undesirable in a test run. In this case, it does `console.log('hi')`. My real case is a request logger that gets incredibly noisy when performing tests that actually send HTTP requests.
+The test subject is a module that exports an Express middleware which performs some work that is undesirable in a test run. In this case, it does `console.log('hi')`. My real case is a request logger that gets incredibly noisy when performing tests that send HTTP requests to the server.
 
 ## Test case
 
@@ -44,18 +44,32 @@ test('1+1', () => {
 
 TypeScript, however, yells at me because `_req`, `_res`, and `next` are all untyped, and thus fail the `noImplicitAny` check:
 
-__implicit-any image placeholder__
+![untyped version where variables are implicitly 'any'](https://raw.githubusercontent.com/theneva/jest-babel-hoist-typescript-repro/master/images/implicit-any.png)
 
 ### Typed solution
 
 I can explicitly type `fakeMiddleware` as an `express.RequestHandler` like this:
 
-__typed image placeholder__
+```ts
+import { RequestHandler } from 'express';
+
+jest.mock('./index', () => {
+  const fakeMiddleware: RequestHandler = (_req, _res, next) => next();
+
+  return {
+    middleware: fakeMiddleware,
+  };
+});
+
+test('1+1', () => {
+  expect(1 + 1).toBe(2);
+});
+```
 
 This makes TypeScript happy. `jest`, on the other hand, is not:
 
-__failed-jest-run image placeholder__
+![failed test run](https://raw.githubusercontent.com/theneva/jest-babel-hoist-typescript-repro/master/images/failed-jest-run.png)
 
 ## The problem
 
-Since Jest does not perform any checks related to typings, it makes sense to me that type information should be stripped before hoisting of mocks is performed. As Jest claims I reference an out-of-scope "variable" (actually a type), this does not seem to be the case. To me (and @simenb, who looked at this after I gave up), this seems like a bug. 
+Since Jest does not perform any checks related to typings, it makes sense to me that type information should be stripped before mocks are hoisted. As Jest claims I reference an out-of-scope "variable" (actually a type), this does not seem to be the case. To me (and @simenb, who looked at this after I gave up), this seems like a bug. 
