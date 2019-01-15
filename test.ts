@@ -1,5 +1,7 @@
+import { RequestHandler } from 'express';
+
 jest.mock('./index', () => {
-  const fakeMiddleware = (_req, _res, next) => next();
+  const fakeMiddleware: RequestHandler = (_req, _res, next) => next();
 
   return {
     middleware: fakeMiddleware,
