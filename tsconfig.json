@@ -2,6 +2,7 @@
   "compilerOptions": {
     "outDir": "dist",
     "lib": ["es2017"],
+    "noImplicitAny": true,
     "allowSyntheticDefaultImports": true
   }
 }
